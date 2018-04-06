@@ -1,0 +1,64 @@
+package com.kkd.farmerviewproductservice;
+
+import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+
+
+@RestController
+public class FarmerViewproductServiceController {
+
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	@Autowired
+    private FarmerViewproductServiceApplicationProxy proxy ;
+	//using messege sender service to send message to rabbitmq
+	@Autowired
+	private MessageSender sendMessageToRabbit;
+	
+	
+	/*@HystrixCommand(fallbackMethod="fallback")
+	@GetMapping("/bye")
+	public String sayBye() {
+		logger.info("{}", "hi");
+		
+		if(RandomUtils.nextBoolean()) {
+			throw new RuntimeException("Failed loadin Bye");
+		}
+		return "bye";
+	}*/
+	
+	
+	@HystrixCommand(fallbackMethod="fallback")
+	@PostMapping("/farmer/{farmerId}/product")
+	public void  addProduct( @PathVariable String farmerId,@RequestBody FarmerProduct farmerProduct ) {
+		logger.info("{}", "Calling product servicfarmer-viewproduct-servicee to add the product for farmer with id : "+farmerId );
+		String productId = proxy.addProduct(farmerId,farmerProduct);
+		logger.info("{}", "Product is added with product id : "+productId);
+		this.sendMsg("Product is added with product id : "+productId+" for farmer id : "+farmerId );
+	}
+	
+	public String fallback() {
+
+		return "Product cannot be added right now";
+	}
+
+	//a demo mapping to send msg
+	@RequestMapping("/send")
+	public String sendMsg(String message){
+		
+		logger.info("Sending message...");
+		sendMessageToRabbit.produceMsg(message);
+		return "Done";
+	}
+		
+
+}

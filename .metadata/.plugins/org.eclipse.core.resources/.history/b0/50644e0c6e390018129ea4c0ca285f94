@@ -1,0 +1,12 @@
+package com.kkd.farmeraddproductservice;
+import org.springframework.cloud.netflix.ribbon.RibbonClient;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+
+
+
+@FeignClient(name="farmer-product-service")
+@RibbonClient(name="farmer-product-service")
+public interface FarmerAddproductServiceApplicationProxy {
+	String addProduct(String farmerId, FarmerProduct farmerProduct);
+}

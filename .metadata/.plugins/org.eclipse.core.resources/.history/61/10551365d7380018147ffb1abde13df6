@@ -1,0 +1,12 @@
+package com.kkd.farmerviewproductservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class FarmerViewproductServiceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(FarmerViewproductServiceApplication.class, args);
+	}
+}

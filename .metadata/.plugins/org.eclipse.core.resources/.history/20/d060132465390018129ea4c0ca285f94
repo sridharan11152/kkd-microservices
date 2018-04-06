@@ -1,0 +1,85 @@
+package com.kkd.farmerviewproductservice;
+
+import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+
+
+@RestController
+public class FarmerViewproductServiceController {
+
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
+	@Autowired
+    private FarmerViewproductServiceApplicationProxy proxy ;
+	//using messege sender service to send message to rabbitmq
+	@Autowired
+	private MessageSender sendMessageToRabbit;
+	
+	
+	/*@HystrixCommand(fallbackMethod="fallback")
+	@GetMapping("/bye")
+	public String sayBye() {
+		logger.info("{}", "hi");
+		
+		if(RandomUtils.nextBoolean()) {
+			throw new RuntimeException("Failed loadin Bye");
+		}
+		return "bye";
+	}*/
+	
+	
+	@HystrixCommand(fallbackMethod="fallbackForViewProducts")
+	@GetMapping("/farmer/{farmerId}/product")
+	public void  viewProducts( @PathVariable String farmerId) {
+		logger.info("{}", "Calling farmer product service  to get the products  of farmer with id : "+farmerId );
+	 proxy.viewProducts(farmerId);
+		logger.info("{}", "Product is added with product id : "+productId);
+		this.sendMsg("Product is added with product id : "+productId+" for farmer id : "+farmerId );
+	}
+	
+	@HystrixCommand(fallbackMethod="fallbackForEditProducts")
+	@PutMapping("/farmer/{farmerId}/product/{productId}")
+	public void editProducts(@PathVariable String farmerId,@PathVariable String productId) {
+  
+		logger.info("{}", "Calling farmer product service  to edit product (id : "+ productId + " )of farmer with id : "+farmerId );
+		proxy.editProducts(farmerId,productId);
+		logger.info("{}", " product (id : "+ productId + " )of farmer with id : "+farmerId+ " is edited" );
+		this.sendMsg(" product (id : "+ productId + " )of farmer with id : "+farmerId+ " is edited");
+	}
+	
+	
+	@HystrixCommand(fallbackMethod="fallbackForDeleteProducts")
+	@DeleteMapping("/farmer/{farmerId}/product/{productId}")
+	public void deleteProducts(@PathVariable String farmerId,@PathVariable String productId) {
+		logger.info("{}", "Calling farmer product service  to delete product (id : "+ productId + " )of farmer with id : "+farmerId );
+		proxy.deleteProducts(farmerId,productId);
+		logger.info("{}", " product (id : "+ productId + " )of farmer with id : "+farmerId+ " is deleted" );
+		this.sendMsg(" product (id : "+ productId + " )of farmer with id : "+farmerId+ " is deleted");
+	}
+	public String fallback() {
+
+		return "Product cannot be added right now";
+	}
+
+	//a demo mapping to send msg to rabbitmq
+	@RequestMapping("/send")
+	public String sendMsg(String message){
+		
+		logger.info("Sending message...");
+		sendMessageToRabbit.produceMsg(message);
+		return "Done";
+	}
+		
+
+}

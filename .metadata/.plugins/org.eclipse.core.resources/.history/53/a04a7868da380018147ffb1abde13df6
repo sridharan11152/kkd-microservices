@@ -1,0 +1,5 @@
+package com.kkd.farmerviewproductservice;
+
+public interface FarmerViewproductServiceApplicationProxy {
+
+}
